@@ -6,7 +6,57 @@ $(document).ready( function() {
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
 	});
+	
+
+	$('.inspiration-getter').submit( function(event){
+		$('.results').html('');
+		var answererTags = $(this).find("input[name='answerers']").val();
+		getTopAnswerers(answererTags);
+
+	});	
 });
+
+
+var showTopAnswerer = function(answerer) {
+	
+	// clone our result template code
+	var result = $('.templates .topAnswerer').clone();
+	
+	// set the post count property in result
+	var postCount = result.find('.postCount');
+	postCount.text(answerer.post_count);
+
+	// set the score property in result
+	var score = result.find('.score');
+	score.text(answerer.score);
+
+	// set the user image
+	var userImage = result.find('#userImage');
+	userImage.attr("src",answerer.user.profile_image);
+
+	//set the user link
+	var userLink = result.find('#userLink');
+	userLink.attr("href" , answerer.user.link);
+	userLink.text(answerer.user.display_name);
+
+	//set the accept rate
+	var acceptRate = result.find('#acceptRate');
+	acceptRate.text(answerer.user.accept_rate);
+
+	//set the user id
+	var userId = result.find('#userId');
+	userId.text(answerer.user.user_id);
+
+	//set the user reputation
+	var reputation = result.find('#reputation');
+	reputation.text(answerer.user.reputation);
+	
+	//set the user type
+	var userType = result.find('#userType');
+	userType.text(answerer.user.user_type);
+
+	return result;
+};
 
 // this function takes the question object returned by StackOverflow 
 // and creates new result to be appended to DOM
@@ -56,6 +106,35 @@ var showError = function(error){
 	errorElem.append(errorText);
 };
 
+//takes a tag to be searched on stackoverflow
+var getTopAnswerers = function(tag) {
+	// the parameters we need to pass in our request to StackOverflow's API
+	var requestURL = "http://api.stackexchange.com/2.2/tags/"+tag+"/top-answerers/all_time"
+	var params = {site: 'stackoverflow'};
+
+	var result = $.ajax({
+		url: requestURL,
+		data: params,
+		dataType: "jsonp",
+		type: "GET",
+		}).done(function(result){
+			var searchResults = showSearchResults(tag, result.items.length);
+			$('.search-results').html(searchResults);
+
+			$.each(result.items, function(i, item) {
+			var topAnswerer = showTopAnswerer(item);
+			$('.results').append(topAnswerer);
+
+		});
+		})
+		.fail(function(jqXHR, error, errorThrown){
+		var errorElem = showError(error);
+		$('.search-results').append(errorElem);
+	});
+
+
+};
+
 // takes a string of semi-colon separated tags to be searched
 // for on StackOverflow
 var getUnanswered = function(tags) {
@@ -87,6 +166,7 @@ var getUnanswered = function(tags) {
 		$('.search-results').append(errorElem);
 	});
 };
+
 
 
 
